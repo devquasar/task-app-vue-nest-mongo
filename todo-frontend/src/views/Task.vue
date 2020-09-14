@@ -14,7 +14,10 @@
             class="materialize-textarea"
           ></textarea>
           <label for="description">Description</label>
-          <span class="character-counter" style="float: right; font-size: 12px;">0/2048</span>
+          <span
+            class="character-counter"
+            style="float: right; font-size: 12px;"
+          >{{ description.length }}/2048</span>
         </div>
 
         <input type="text" ref="datepicker" />
@@ -37,13 +40,19 @@ export default {
     description: "",
     chips: null,
     date: null,
-    task: [],
+    task: {},
   }),
 
   mounted() {
     this.id = this.$route.params.id;
     this.getTodo();
 
+    setTimeout(() => {
+      M.updateTextFields();
+    }, 0);
+  },
+
+  created() {
     this.chips = M.Chips.init(this.$refs.chips, {
       placeholder: "Add tags :)",
       data: this.task.tags,
@@ -53,9 +62,6 @@ export default {
       defaultDate: new Date(this.task.date),
       setDefaultDate: true,
     });
-    setTimeout(() => {
-      M.updateTextFields();
-    }, 0);
   },
 
   methods: {
@@ -82,7 +88,7 @@ export default {
     getTodo() {
       axios
         .get(`${server.baseURL}/todo/${this.id}`)
-        .then((data) => (this.task = data.data));
+        .then((data) => (this.task = JSON.parse(JSON.stringify(data.data))));
     },
   },
 
