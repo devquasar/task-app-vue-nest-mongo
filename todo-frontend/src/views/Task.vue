@@ -14,10 +14,7 @@
             class="materialize-textarea"
           ></textarea>
           <label for="description">Description</label>
-          <span
-            class="character-counter"
-            style="float: right; font-size: 12px;"
-          >{{ description.length }}/2048</span>
+          <span class="character-counter" style="float: right; font-size: 12px;">0/2048</span>
         </div>
 
         <input type="text" ref="datepicker" />
@@ -33,15 +30,20 @@
 </template>
 
 <script>
+import { server } from "../utils/helper";
+import axios from "axios";
 export default {
   data: () => ({
     description: "",
     chips: null,
     date: null,
+    task: [],
   }),
 
   mounted() {
-    this.description = this.task.description;
+    this.id = this.$route.params.id;
+    this.getTodo();
+
     this.chips = M.Chips.init(this.$refs.chips, {
       placeholder: "Add tags :)",
       data: this.task.tags,
@@ -58,16 +60,29 @@ export default {
 
   methods: {
     submitHandler() {
-      this.$store.dispatch("updateTask", {
-        id: this.task.id,
+      let todoData = {
+        title: this.title,
         description: this.description,
+        id: Date.now(),
+        status: "active",
+        tags: this.chips.chipsData,
         date: this.date.date,
-      });
-      this.$router.push("/list");
+      };
+      axios
+        .put(`${server.baseURL}/edit?todoID=${this.id}`, todoData)
+        .then((data) => {
+          this.$router.push("/list");
+        });
     },
     completeTask() {
       this.$store.dispatch("completeTask", this.task.id);
       this.$router.push("/list");
+    },
+
+    getTodo() {
+      axios
+        .get(`${server.baseURL}/todo/${this.id}`)
+        .then((data) => (this.task = data.data));
     },
   },
 
@@ -79,12 +94,6 @@ export default {
     if (this.chips && this.chips.destroy) {
       this.chips.destroy();
     }
-  },
-
-  computed: {
-    task() {
-      return this.$store.getters.taskById(+this.$route.params.id);
-    },
   },
 };
 </script>

@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col s6 offset-s3">
       <h1>Create Task</h1>
-      <form @submit.prevent="submitHandler">
+      <form id="create-todo-form" @submit.prevent="submitHandler">
         <div class="input-field">
           <input v-model="title" id="title" type="text" class="validate" required />
           <label for="title">Title</label>
@@ -27,6 +27,8 @@
 </template>
 
 <script>
+import axios from "axios";
+import { server } from "../utils/helper";
 export default {
   name: "create",
 
@@ -51,15 +53,18 @@ export default {
   methods: {
     submitHandler() {
       const task = {
+        _id: Date.now(),
         title: this.title,
         description: this.description,
-        id: Date.now(),
         status: "active",
         tags: this.chips.chipsData,
         date: this.date.date,
       };
-      this.$store.dispatch("createTask", task);
+      this.__submitToServer(task);
       this.$router.push("/list");
+    },
+    __submitToServer(data) {
+      axios.post(`${server.baseURL}/todo`, data);
     },
   },
 

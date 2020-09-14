@@ -36,7 +36,7 @@
           </td>
           <td>{{task.status}}</td>
           <td>
-            <router-link tag="button" class="btn btn-small" :to="'/task/' + task.id">Open</router-link>
+            <router-link tag="button" class="btn btn-small" :to="'/task/' + task._id">Open</router-link>
           </td>
         </tr>
       </tbody>
@@ -46,15 +46,16 @@
 </template>
 
 <script>
+import { server } from "@/utils/helper";
+import axios from "axios";
+
 export default {
   data: () => ({
     filter: null,
+    tasks: [],
   }),
 
   computed: {
-    tasks() {
-      return this.$store.getters.tasks;
-    },
     displayTasks() {
       return this.tasks.filter((t) => {
         if (!this.filter) {
@@ -65,8 +66,17 @@ export default {
     },
   },
 
+  methods: {
+    fetchTodo() {
+      axios
+        .get(`${server.baseURL}/todos`)
+        .then((data) => (this.tasks = data.data));
+    },
+  },
+
   mounted() {
     this.select = M.FormSelect.init(this.$refs.select);
+    this.fetchTodo();
   },
 };
 </script>
