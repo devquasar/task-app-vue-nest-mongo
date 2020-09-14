@@ -28,7 +28,7 @@ npm run start:dev
 
 This will start the backend application on port `3000`.
 
-### Frontend dependencies
+## Frontend dependencies
 
 ```bash
 cd todo-frontend
