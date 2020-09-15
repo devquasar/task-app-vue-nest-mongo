@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post } from './interfaces/post.interface';
+
 import { CreateTodoDTO } from './dto/create-todo.dto';
+import { Post } from './interfaces/post.interface';
 
 @Injectable()
 export class TodoService {
