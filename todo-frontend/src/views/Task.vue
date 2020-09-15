@@ -1,30 +1,29 @@
 <template>
   <div class="row">
-    <div v-if="task" class="col s6 offset-s3">
-      <h1>{{task.title}}</h1>
+    <div v-if="dataReady" class="col s6 offset-s3">
+      <h1>{{ currentTask.title }}</h1>
 
-      <form @submit.prevent="submitHandler">
-        <div class="chips mb-4" ref="chips"></div>
-
+      <form>
         <div class="input-field">
           <textarea
             style="min-height: 150px"
-            v-model="description"
+            v-model="currentTask.description"
             id="description"
             class="materialize-textarea"
           ></textarea>
-          <label for="description">Description</label>
+          <label for="description" class="active">Description</label>
           <span
             class="character-counter"
             style="float: right; font-size: 12px;"
-          >{{ description.length }}/2048</span>
+          >{{ currentTask.description.length }}/2048</span>
         </div>
 
-        <input type="text" ref="datepicker" />
-
-        <div v-if="task.status !== 'completed'">
-          <button class="btn" type="submit" style="margin-right: 1rem;">Update</button>
-          <button class="btn blue" type="button" @click="completeTask">Complete Task</button>
+        <div v-if="currentTask.status !== 'completed'">
+          <button @click="updateTask" class="btn" style="margin-right: 1rem;">Update</button>
+          <button @click="completeTask" class="btn blue" type="button">Complete Task</button>
+        </div>
+        <div v-else>
+          <button @click="deleteTask" class="btn red" type="button">Delete Task</button>
         </div>
       </form>
     </div>
@@ -36,60 +35,74 @@
 import { server } from "../utils/helper";
 import axios from "axios";
 export default {
+  name: "task",
   data: () => ({
-    description: "",
-    chips: null,
-    date: null,
-    task: {},
+    dataReady: false,
+    currentTask: null,
+    message: "",
   }),
 
-  mounted() {
-    this.id = this.$route.params.id;
-    this.getTodo();
+  methods: {
+    async getTodo(id) {
+      await axios.get(`${server.baseURL}/todo/${id}`).then((response) => {
+        this.currentTask = JSON.parse(JSON.stringify(response.data));
+      });
+      this.dataReady = true;
+      this.currentTask.chips = M.Chips.init(this.$refs.chips, {
+        placeholder: "Add tags :)",
+        data: this.currentTask.tags,
+      });
+    },
 
+    completeTask() {
+      var todoData = {
+        _id: this.currentTask._id,
+        title: this.currentTask.title,
+        description: this.currentTask.description,
+        status: "completed",
+        tags: this.currentTask.tags,
+        date: this.currentTask.date,
+      };
+
+      axios
+        .put(`${server.baseURL}/edit?todoID=${this.currentTask._id}`, todoData)
+        .then((data) => {
+          this.$router.push("/list");
+        });
+    },
+
+    updateTask() {
+      axios
+        .put(
+          `${server.baseURL}/edit?todoID=${this.currentTask._id}`,
+          this.currentTask
+        )
+        .then((response) => {
+          this.$router.push("/list");
+        });
+    },
+
+    deleteTask() {
+      console.log("task deleted now");
+    },
+  },
+
+  created() {
+    this.tags = M.Chips.init(this.$refs.chips, {
+      placeholder: "Add tags :)",
+    });
+    this.date = M.Datepicker.init(this.$refs.datepicker, {
+      format: "dd.mm.yyyy",
+      defaultDate: new Date(),
+      setDefaultDate: true,
+    });
     setTimeout(() => {
       M.updateTextFields();
     }, 0);
   },
 
-  created() {
-    this.chips = M.Chips.init(this.$refs.chips, {
-      placeholder: "Add tags :)",
-      data: this.task.tags,
-    });
-    this.date = M.Datepicker.init(this.$refs.datepicker, {
-      format: "dd.mm.yyyy",
-      defaultDate: new Date(this.task.date),
-      setDefaultDate: true,
-    });
-  },
-
-  methods: {
-    submitHandler() {
-      let todoData = {
-        title: this.title,
-        description: this.description,
-        id: Date.now(),
-        status: "active",
-        tags: this.chips.chipsData,
-        date: this.date.date,
-      };
-      axios
-        .put(`${server.baseURL}/edit?todoID=${this.id}`, todoData)
-        .then((data) => {
-          this.$router.push("/list");
-        });
-    },
-    completeTask() {
-      this.$store.dispatch("completeTask", this.task.id);
-      this.$router.push("/list");
-    },
-
-    getTodo() {
-      axios
-        .get(`${server.baseURL}/todo/${this.id}`)
-        .then((data) => (this.task = JSON.parse(JSON.stringify(data.data))));
-    },
+  mounted() {
+    (this.message = ""), this.getTodo(this.$route.params.id);
   },
 
   destroyed() {
