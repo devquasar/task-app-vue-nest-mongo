@@ -2,8 +2,8 @@
 
 ## Frontend
 
-### Vue.js
+Vue.js
 
 ## Backend
 
-### Nest.js MongoDB
+Nest.js MongoDB
